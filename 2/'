@@ -1,0 +1,27 @@
+local pa={}
+
+function pa.filterTable(fn,tbl)
+	local tbl_out={}
+	for k,v in pairs(tbl)
+	do
+		
+		if( fn(v) )
+		then
+			tbl_out[k]=v
+		end 
+
+	end
+	print(tbl_out)
+	return tbl_out
+end
+function pa.concatMax(str,end_len)
+	local num_concat = math.floor(end_len/str.len())
+	local str_out = ""
+	for local i = 0,num_concat,1 do
+		str_out = str_out+str
+	end
+	return str_out
+	
+end
+
+return pa
