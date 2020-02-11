@@ -20,25 +20,19 @@ function pa.concatMax(str,end_len)
 	
 end
 function pa.collatz(n)
-	n = math.floor(n+0.5)
-	if(n%2==0) then
-		coroutine.yield(n)
-		print("even")
-		print(n)
-		n=2/n
-		return pa.collatz(n)
+	while(n	~=1) do
+		if(n%2==0) then
 
-		--- even
-	else
-		--odd
-		coroutine.yield(n)
-		n=3*n+1
-		print("odd")
-		print(n)
-		return pa.collatz(n)
+			coroutine.yield(n);
+			n=n/2
+		else
+			coroutine.yield(n);
+			n = 3*n+1
+		end
+
 
 	end
-
+	coroutine.yield(n);
 
 end
 
