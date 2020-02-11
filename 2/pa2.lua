@@ -35,5 +35,36 @@ function pa.collatz(n)
 	coroutine.yield(n);
 
 end
+function pa.allSubs(str)
+	local current_len =0 
+	local index =0 
+	local function iter(foo,bar)
+		print(str)
+		if index==string.len(str) then
+		        index=index+1
+			return "" 
+		end
+		if index>=string.len(str) then
+			return nil
+		end
+		if index+current_len>=string.len(str) then
+			current_len = 1 
+			index = index+1
+			if index==string.len(str)-1 then
+				return nil
+			end
+		local temp_str = string.sub(str,index,index+current_len)
+		current_len = current_len+1
+		return  temp_str
+		end
+		
+		local temp_str = string.sub(str,index,index+current_len)
+		current_len = current_len+1
+		return  temp_str
+	end
+	return iter,nil,nil
+
+
+end
 
 return pa
