@@ -11,7 +11,6 @@ function pa.filterTable(fn,tbl)
 		end 
 
 	end
-	print(tbl_out)
 	return tbl_out
 end
 function pa.concatMax(str,end_len)
@@ -38,33 +37,38 @@ end
 function pa.allSubs(str)
 	local current_len =0 
 	local index =0 
+	local flag = 0
+	local ended = 0
 	local function iter(foo,bar)
-		print(str)
-		if index==string.len(str) then
-		        index=index+1
-			return "" 
-		end
-		if index>=string.len(str) then
+		if(ended==1)then
 			return nil
 		end
-		if index+current_len>=string.len(str) then
-			current_len = 1 
-			index = index+1
-			if index==string.len(str)-1 then
+		--special case for empty string
+		if string.len(str)==0 then
+			if flag==0 then
+				flag=1
+				return ""
+			else 
 				return nil
 			end
-		local temp_str = string.sub(str,index,index+current_len)
-		current_len = current_len+1
-		return  temp_str
+
 		end
-		
-		local temp_str = string.sub(str,index,index+current_len)
-		current_len = current_len+1
-		return  temp_str
+		local out_str = string.sub(str,index-current_len,index)
+		if index==0 and current_len==0 then
+			out_str=""
+		end
+		index= index+1
+		if index>string.len(str) then
+			index = current_len+2
+			current_len=current_len+1
+			if index>string.len(str) then
+				ended=1
+				return str
+			end
+		end
+		return out_str
 	end
 	return iter,nil,nil
-
-
 end
 
 return pa
