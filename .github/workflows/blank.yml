@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: MilesChou/lua-action@v0.0.1
     - name: Run a one-line script
       run: |
         cd 2
