@@ -96,21 +96,23 @@ function lexit.lex(input)
 			if in_comment then 
 				while true do
 					if index>len then
+						print("eof reached in comment")
 						return
 					end
-					break
 					current_char = input:sub(index,index)
-					if current_char~="\n" then
+					if current_char=="\n" then
 						index=index+1
-					else
 						break;
+					else
+						index = index+1
 					end
+					
 
 				end
 
 			end
 			
-			if in_word then
+			if is_idstart(input:sub(index,index)) then
 				local current_string = ""
 				while true do
 					print("index: "..index)
