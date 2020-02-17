@@ -150,21 +150,30 @@ function lexit.lex(input)
 				handle_comment()
 			end
 			if is_num(current_char) then 
-				local current_string = ""
-				while index<=len do
-					if is_num(input:sub(index,index)) then
-						current_string = current_string..input:sub(index,index)
-						index=index+1
-					else
-						if current_string=="" then
-							return nil
-						end
-						return current_string,lexit.NUMLIT
-					end
-				end
-				return current_string,lexit.NUMLIT
+		local current_string = ""
+		while index<=len do
+			
+		--print("index: "..index)
+		if is_num(inbut:sub(index,index)) then
+			if is_num(input:sub(index,index)) then
+				current_string = current_string..input:sub(index,index)
+				--print("current_string: "..current_string)
+				index=index+1
+			else 
 
-			elseif is_idstart(input:sub(index,index)) then
+				if current_string=="" then
+					return
+				end
+				index=index+1
+				return current_string,lexit.NUMLIT
+			end
+
+		end
+	end
+
+			end
+			
+			if is_idstart(input:sub(index,index)) then
 				local current_string = ""
 				while index<=len do
 					--print("index: "..index)
@@ -195,8 +204,6 @@ function lexit.lex(input)
 
 				
 
-			else
-				return "",lexit.MAL
 			end
 		end
 	end
