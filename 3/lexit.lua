@@ -23,38 +23,106 @@ function is_idstart(char)
 	end
 	return false
 end
+function is_idbody(char)
+	print("char: "..char)
+	if char:match("_") or char:match("[A-Z]") or char:match("[a-z]") or char:match("[0-9]") then
+		return true
+	end
+	return false
+end
 function is_keyword(word) 
 	print("TODO NOT DONE")
 	return false
 end
+function is_comment(char)
+	if char=="#" then
+		return true
+	end
+	return false
+end
+function is_white_space(char)
+	print("checking if whitespace")
+	if char ==" " or char =="\n" then
+		return true
+	end
+	return false
+end
 
 function lexit.lex(input)
-	local index = 0;
+	local index = 1;
 	local len = string.len(input)
 	local in_word = false
 	local in_str=false
 	local in_opr = false
 	local in_punc=false
+	local in_comment=false
 	
 	return function()
 		print(input)
-		if index<len then
+		if index<=len then
 			--check flags
-			if in_word==false and in_str==false and in_opr==false and in_punc==false then
-				current_char = input:sub(index,index+1)
-				if is_idstart(current_char) then
-					print("MATCHED "..current_char)
-					in_word = true
+			current_char = input:sub(index,index)
+			if is_white_space(current_char) then
+				while(true) do
+					if index<=len then
+						current_char = input:sub(index,index)
+						print("c char: \'"..current_char.."\'")
+						if is_white_space(current_char) then
+							print("incrementing index")
+							index=index+1
+
+						else
+							break;
+
+						end
+
+					else
+						print("index: "..index.." to big")
+						return
+					end
+					
 				end
+
 			end
+			if is_idstart(current_char) then
+				print("MATCHED "..current_char)
+				in_word = true
+			end
+			if is_comment(current_char) then
+				print("IN COMMENT")
+				in_comment=true
+			end
+
+			if in_comment then 
+				while true do
+					if index>len then
+						return
+					end
+					break
+					current_char = input:sub(index,index)
+					if current_char~="\n" then
+						index=index+1
+					else
+						break;
+					end
+
+				end
+
+			end
+			
 			if in_word then
 				local current_string = ""
 				while true do
-					if is_idstart(input:sub(index,index+1)) and index<len then
-						current_string = current_string..input:sub(index,index+1)
-						print("added")
+					print("index: "..index)
+					if is_idbody(input:sub(index,index)) and index<=len then
+						current_string = current_string..input:sub(index,index)
+						print("current_string: "..current_string)
 						index=index+1
 					else 
+
+						if current_string=="" then
+							return
+						end
 						index=index+1
 						if is_keyword(current_string) then
 							return current_string,lexit.KEY
@@ -66,17 +134,6 @@ function lexit.lex(input)
 				
 
 			end
-			--[[
-			if in_word then
-				--do word stuff
-			else if in_str then
-				--do in_str stuff
-			else if in_opr then 
-				--do in_opr stuff
-			else if in_punc then
-				--do punc stiff
-			end
-			--]]
 		else
 			print("length wrong?")
 		end
