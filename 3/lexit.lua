@@ -147,7 +147,9 @@ function lexit.lex(input)
 		
 		while index<=len do
 			--check flags
+
 			current_char = input:sub(index,index)
+			print("current_char: "..current_char)
 			if is_white_space(current_char) then
 				handle_space()
 
@@ -166,6 +168,7 @@ function lexit.lex(input)
 				return current_char,lexit.PUNCT
 			end
 			if is_op(current_char) then
+				print("is operator")
 				index=index+1
 				return current_char,lexit.OP
 			end
@@ -174,26 +177,40 @@ function lexit.lex(input)
 				local chars_since_e=-1
 				while index<=len do
 
+					local called = false
 					local next_char = input:sub(index+1,index+1)
-					if input:sub(index,index)=="e" and chars_since_e==-1 and(next_char=="+" or is_num(next_char)) then
-						current_string=current_string.."e"
-						chars_since_e=0
-						index=index+1
+					if input:sub(index,index)=="e" and chars_since_e==-1 then
+						if next_char=="+" or is_num(next_char) then
+							current_string=current_string.."e"
+							chars_since_e=0
+							index=index+1
+							called =true
+						else
+							print("invalid e current_char: "..input:sub(index,index))
+						
+							break
+						end
+						
 					elseif chars_since_e==0 and (input:sub(index,index)=="+") then 
 						chars_since_e = chars_since_e+1
 						current_string=current_string..input:sub(index,index)
 						index=index+1
+						called = true
 					elseif is_num(input:sub(index,index)) then
 						current_string = current_string..input:sub(index,index)
 						index=index+1
 						if chars_since_e>=0 then
 							chars_since_e=chars_since_e+1
 						end
+						called = true
 					else
 						if current_string=="" then
 							return nil
 						end
 						return current_string,lexit.NUMLIT
+					end
+					if called~=true then
+						break
 					end
 				end
 				return current_string,lexit.NUMLIT
@@ -210,7 +227,7 @@ function lexit.lex(input)
 						if current_string=="" then
 							return
 						end
-						index=index+1
+						--index=index+1
 						if is_keyword(current_string) then
 							print("returning keyword")
 							return current_string,lexit.KEY
@@ -234,7 +251,7 @@ function lexit.lex(input)
 				return "",lexit.MAL
 			end
 			--]]
-		end
+			end
 		end
 	end
 
