@@ -89,6 +89,9 @@ function is_valid(char)
 	end
 	return false
 end
+function is_invalid(char)
+	return is_valid(char)==false
+end
 function is_comment(char)
 	if char=="#" then
 		return true
@@ -129,7 +132,9 @@ function lexit.lex(input)
 
 	end
 	function handle_invalid()
-
+		local out_str = input:sub(index,len)
+		index=len
+		return out_str,malformed
 	end
 	function handle_comment()
 				while index<=len do
@@ -303,6 +308,9 @@ function lexit.lex(input)
 				while index<=len do
 					local current_char=input:sub(index,index)
 					print("string char "..current_char)
+					if is_invalid(current_char) then
+						return handle_invalid()
+					end
 					if is_string_end(current_char) and escape==false and current_char==start_char  then
 						current_string = current_string..input:sub(index,index)
 						print("end str")
