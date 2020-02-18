@@ -30,6 +30,17 @@ function is_idbody(char)
 	end
 	return false
 end
+function is_punc(char)
+	if char=="." or char=="&" or char=="(" or char=="@" or char=="$" then 
+		return true
+	end
+	return false
+end
+function is_op(char)
+	if char=="+" or char=="-" or char=="=" then
+		return true
+	end
+end
 function is_num(char) 
 	if char:match("[0-9]") then
 		return true
@@ -149,12 +160,35 @@ function lexit.lex(input)
 			if is_comment(current_char) then 
 				handle_comment()
 			end
+			if is_punc(current_char) then
+				
+				index=index+1
+				return current_char,lexit.PUNCT
+			end
+			if is_op(current_char) then
+				index=index+1
+				return current_char,lexit.OP
+			end
 			if is_num(current_char) then 
 				local current_string = ""
+				local chars_since_e=-1
 				while index<=len do
-					if is_num(input:sub(index,index)) then
+
+					local next_char = input:sub(index+1,index+1)
+					if input:sub(index,index)=="e" and chars_since_e==-1 and(next_char=="+" or is_num(next_char)) then
+						current_string=current_string.."e"
+						chars_since_e=0
+						index=index+1
+					elseif chars_since_e==0 and (input:sub(index,index)=="+") then 
+						chars_since_e = chars_since_e+1
+						current_string=current_string..input:sub(index,index)
+						index=index+1
+					elseif is_num(input:sub(index,index)) then
 						current_string = current_string..input:sub(index,index)
 						index=index+1
+						if chars_since_e>=0 then
+							chars_since_e=chars_since_e+1
+						end
 					else
 						if current_string=="" then
 							return nil
@@ -170,7 +204,6 @@ function lexit.lex(input)
 					--print("index: "..index)
 					if is_idbody(input:sub(index,index)) then
 						current_string = current_string..input:sub(index,index)
-						--print("current_string: "..current_string)
 						index=index+1
 					else 
 
@@ -192,12 +225,16 @@ function lexit.lex(input)
 				else
 					return current_string,lexit.ID
 				end
+				
 
 				
 
+				--[[
 			else
 				return "",lexit.MAL
 			end
+			--]]
+		end
 		end
 	end
 
