@@ -145,43 +145,52 @@ function lexit.lex(input)
 	return function()
 		print("prgram input: \""..input.."\"")
 		
+		
 		while index<=len do
 			--check flags
+			local recognized_syntax=false
 
 			current_char = input:sub(index,index)
-			print("current_char: "..current_char)
 			if is_white_space(current_char) then
+				recognized_syntax=true
 				handle_space()
 
-			end
-			if is_idstart(current_char) then
-				print("MATCHED "..current_char)
-				in_word = true
+
 			end
 
 			if is_comment(current_char) then 
+				recognized_syntax=true
 				handle_comment()
 			end
 			if is_punc(current_char) then
+				recognized_syntax=true
 				
 				index=index+1
 				return current_char,lexit.PUNCT
 			end
 			if is_op(current_char) then
+				recognized_syntax=true
 				print("is operator")
 				index=index+1
 				return current_char,lexit.OP
 			end
 			if is_num(current_char) then 
+				recognized_syntax=true
 				local current_string = ""
 				local chars_since_e=-1
 				while index<=len do
 
 					local called = false
 					local next_char = input:sub(index+1,index+1)
-					if input:sub(index,index)=="e" and chars_since_e==-1 then
-						if next_char=="+" or is_num(next_char) then
-							current_string=current_string.."e"
+					if chars_since_e==-1 and (input:sub(index,index)=="e" or input:sub(index,index)=="E") then
+						if next_char=="+" and is_num(input:sub(index+2,index+2)) then
+							current_string=current_string..input:sub(index,index)
+							chars_since_e=0
+							index=index+1
+							called =true
+							
+						elseif is_num(next_char) then
+							current_string=current_string..input:sub(index,index)
 							chars_since_e=0
 							index=index+1
 							called =true
@@ -216,6 +225,7 @@ function lexit.lex(input)
 				return current_string,lexit.NUMLIT
 
 			elseif is_idstart(input:sub(index,index)) then
+				recognized_syntax=true
 				local current_string = ""
 				while index<=len do
 					--print("index: "..index)
@@ -251,6 +261,16 @@ function lexit.lex(input)
 				return "",lexit.MAL
 			end
 			--]]
+			end
+			if recognized_syntax==false then
+				local current_string=""
+				while(index<=len) do
+					current_char=input:sub(index,index)
+					current_string=current_string..current_char
+					index=index+1
+				end
+
+				return current_string,lexit.MAL
 			end
 		end
 	end
