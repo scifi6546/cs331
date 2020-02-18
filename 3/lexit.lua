@@ -270,19 +270,21 @@ function lexit.lex(input)
 				local escape=false
 				local start_char = input:sub(index,index)
 				local current_string=start_char
+				index=index+1
 				while index<=len do
 					local current_char=input:sub(index,index)
 					print("string char "..current_char)
 					if is_string_end(current_char) and escape==false and current_char==start_char  then
 						current_string = current_string..input:sub(index,index)
 						print("end str")
-						index=index+2
+						index=index+1
 						return current_string,lexit.STRLIT
 					elseif current_char=="\\" then
 						current_string=current_string..current_char
 						index=index+1
 						escape=true
 					else 
+						print("in string, current_char: "..current_char)
 						current_string=current_string..current_char
 						index=index+1
 						escape=false
