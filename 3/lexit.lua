@@ -83,8 +83,7 @@ function is_keyword(word)
 	return false
 end
 function is_valid(char)
-	if is_white_space(char) ==true or is_string_end(char)==true or is_string_start(char)==true or 
-		is_idstart(char)==true  or is_idbody(char) or is_punc(char) or is_op(char)==true then
+	if char >= " " and char <= "~" then
 		return true
 	end
 	return false
@@ -131,10 +130,10 @@ function lexit.lex(input)
 		end
 
 	end
-	function handle_invalid()
-		local out_str = input:sub(index,len)
+	function handle_invalid(input_str)
+		local out_str = input_str..input:sub(index,len)
 		index=len
-		return out_str,malformed
+		return out_str,lexit.MAL
 	end
 	function handle_comment()
 				while index<=len do
@@ -182,9 +181,7 @@ function lexit.lex(input)
 		while index<=len do
 			
 			--check flags
-			local recognized_syntax=false
-
-			current_char = input:sub(index,index)
+			local recognized_syntax=false current_char = input:sub(index,index)
 			print("current_char: "..current_char)
 			if is_white_space(current_char) then
 				recognized_syntax=true
@@ -309,7 +306,8 @@ function lexit.lex(input)
 					local current_char=input:sub(index,index)
 					print("string char "..current_char)
 					if is_invalid(current_char) then
-						return handle_invalid()
+						print("string "..current_char.." is invalid")
+						return handle_invalid(current_string)
 					end
 					if is_string_end(current_char) and escape==false and current_char==start_char  then
 						current_string = current_string..input:sub(index,index)
@@ -333,6 +331,7 @@ function lexit.lex(input)
 						escape=false
 					end
 				end
+				print("hit end of while loop")
 				return current_string,lexit.MAL
 
 			end
