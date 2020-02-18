@@ -47,6 +47,18 @@ function is_num(char)
 	end
 	return false
 end
+function is_string_start(char)
+	if char=="'" or char=="\"" then
+		return true
+	end
+	return false
+end
+function is_string_end(char)
+	if char=="'" or char=="\"" then
+		return true
+	end
+	return false
+end
 function is_keyword(word) 
 	
 	if word=="and" or word=="char" or word=="elif" or word=="else" or word=="end" then
@@ -144,13 +156,16 @@ function lexit.lex(input)
 	
 	return function()
 		print("prgram input: \""..input.."\"")
+		print("program_index: "..index)
 		
 		
 		while index<=len do
+			
 			--check flags
 			local recognized_syntax=false
 
 			current_char = input:sub(index,index)
+			print("current_char: "..current_char)
 			if is_white_space(current_char) then
 				recognized_syntax=true
 				handle_space()
@@ -228,7 +243,6 @@ function lexit.lex(input)
 				recognized_syntax=true
 				local current_string = ""
 				while index<=len do
-					--print("index: "..index)
 					if is_idbody(input:sub(index,index)) then
 						current_string = current_string..input:sub(index,index)
 						index=index+1
@@ -237,9 +251,7 @@ function lexit.lex(input)
 						if current_string=="" then
 							return
 						end
-						--index=index+1
 						if is_keyword(current_string) then
-							print("returning keyword")
 							return current_string,lexit.KEY
 						else
 							return current_string,lexit.ID
@@ -252,15 +264,32 @@ function lexit.lex(input)
 				else
 					return current_string,lexit.ID
 				end
-				
+			elseif is_string_start(input:sub(index,index)) then
+				print("is string, start_char: "..input:sub(index,index))
+				recognized_syntax=true
+				local escape=false
+				local start_char = input:sub(index,index)
+				local current_string=start_char
+				while index<=len do
+					local current_char=input:sub(index,index)
+					print("string char "..current_char)
+					if is_string_end(current_char) and escape==false and current_char==start_char  then
+						current_string = current_string..input:sub(index,index)
+						print("end str")
+						index=index+2
+						return current_string,lexit.STRLIT
+					elseif current_char=="\\" then
+						current_string=current_string..current_char
+						index=index+1
+						escape=true
+					else 
+						current_string=current_string..current_char
+						index=index+1
+						escape=false
+					end
+				end
+				return current_string,lexit.MAL
 
-				
-
-				--[[
-			else
-				return "",lexit.MAL
-			end
-			--]]
 			end
 			if recognized_syntax==false then
 				local current_string=""
