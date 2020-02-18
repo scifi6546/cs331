@@ -31,15 +31,20 @@ function is_idbody(char)
 	return false
 end
 function is_punc(char)
-	if char=="." or char=="&" or char=="(" or char=="@" or char=="$" then 
+	if char=="." or char=="&" or char=="(" or char==")" or char=="@" or char=="$" or char==":" or char=="|" or char=="!" or char=="," or char=="^" or char==";" or char=="?" or char=="@" or char=="\\" or char=="`" or char=="{" or char=="}" or char=="~" then 
 		return true
 	end
 	return false
 end
 function is_op(char)
-	if char=="+" or char=="-" or char=="=" then
-		return true
+	if char=="<" or char==">" or char=="="  then
+		return true,true
 	end
+	
+	if char=="+" or char=="-" or char=="*" or char=="/" or char=="%" or char=="[" or char=="]" then
+		return true,false
+	end
+	return false,false
 end
 function is_num(char) 
 	if char:match("[0-9]") then
@@ -75,6 +80,13 @@ function is_keyword(word)
 		print("in while")
 		return true
 	end 
+	return false
+end
+function is_valid(char)
+	if is_white_space(char) ==true or is_string_end(char)==true or is_string_start(char)==true or 
+		is_idstart(char)==true  or is_idbody(char) or is_punc(char) or is_op(char)==true then
+		return true
+	end
 	return false
 end
 function is_comment(char)
@@ -114,6 +126,9 @@ function lexit.lex(input)
 				end
 
 		end
+
+	end
+	function handle_invalid()
 
 	end
 	function handle_comment()
@@ -177,17 +192,31 @@ function lexit.lex(input)
 				recognized_syntax=true
 				handle_comment()
 			end
+
+			if current_char=="!" and input:sub(index+1,index+1)=="=" then
+				recognized_syntax=true
+				index=index+2
+				return "!=",lexit.OP
+			end
 			if is_punc(current_char) then
 				recognized_syntax=true
 				
 				index=index+1
 				return current_char,lexit.PUNCT
 			end
-			if is_op(current_char) then
-				recognized_syntax=true
-				print("is operator")
-				index=index+1
-				return current_char,lexit.OP
+			local can_equal_follow=false
+			local is_operator = false
+			is_operator, can_equal_follow=is_op(current_char)
+			if is_operator then
+				if input:sub(index+1,index+1)=="=" and can_equal_follow==true then
+					index=index+2
+					return current_char.."=",lexit.OP
+				else
+					recognized_syntax=true
+					print("is operator")
+					index=index+1
+					return current_char,lexit.OP
+				end
 			end
 			if is_num(current_char) then 
 				recognized_syntax=true
@@ -280,9 +309,15 @@ function lexit.lex(input)
 						index=index+1
 						return current_string,lexit.STRLIT
 					elseif current_char=="\\" then
-						current_string=current_string..current_char
-						index=index+1
-						escape=true
+						if escape==true then
+							escape=false
+							current_string=current_string..current_char
+							index=index+1
+						else
+							current_string=current_string..current_char
+							index=index+1
+							escape=true
+						end
 					else 
 						print("in string, current_char: "..current_char)
 						current_string=current_string..current_char
