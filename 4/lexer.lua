@@ -17,14 +17,12 @@ lexit.catnames[6]="Punctuation"
 lexit.catnames[7]="Malformed"
 
 function is_idstart(char)
-	--print("char: "..char)
 	if char:match("_") or char:match("[A-Z]") or char:match("[a-z]") then
 		return true
 	end
 	return false
 end
 function is_idbody(char)
-	--print("char: "..char)
 	if char:match("_") or char:match("[A-Z]") or char:match("[a-z]") or char:match("[0-9]") then
 		return true
 	end
@@ -77,7 +75,6 @@ function is_keyword(word)
 		return true
 	end
 	if word=="while" then
-		print("in while")
 		return true
 	end 
 	return false
@@ -99,7 +96,6 @@ function is_comment(char)
 	return false
 end
 function is_white_space(char)
-	print("checking if whitespace")
 	if char ==" " or char =="\n" then
 		return true
 	end
@@ -118,9 +114,7 @@ function lexit.lex(input)
 		current_char = input:sub(index,index)
 		while(index<=len) do
 				current_char = input:sub(index,index)
-				print("c char: \'"..current_char.."\'")
 				if is_white_space(current_char) then
-					print("incrementing index")
 					index=index+1
 
 				else
@@ -155,10 +149,8 @@ function lexit.lex(input)
 	function handle_number()
 		local current_string = ""
 		while index<=len do
-		--print("index: "..index)
 			if is_num(input:sub(index,index)) then
 				current_string = current_string..input:sub(index,index)
-				--print("current_string: "..current_string)
 				index=index+1
 			else 
 
@@ -175,17 +167,12 @@ function lexit.lex(input)
 	end
 	
 	return function()
-		print("prgram input: \""..input.."\"")
-		print("program_index: "..index)
-		
-		
 		while index<=len do
 			
 			--check flags
 			local recognized_syntax=false
 
 			current_char = input:sub(index,index)
-			print("current_char: "..current_char)
 			if is_white_space(current_char) then
 				recognized_syntax=true
 				handle_space()
@@ -218,7 +205,6 @@ function lexit.lex(input)
 					return current_char.."=",lexit.OP
 				else
 					recognized_syntax=true
-					print("is operator")
 					index=index+1
 					return current_char,lexit.OP
 				end
@@ -244,7 +230,6 @@ function lexit.lex(input)
 							index=index+1
 							called =true
 						else
-							print("invalid e current_char: "..input:sub(index,index))
 						
 							break
 						end
@@ -299,7 +284,6 @@ function lexit.lex(input)
 					return current_string,lexit.ID
 				end
 			elseif is_string_start(input:sub(index,index)) then
-				print("is string, start_char: "..input:sub(index,index))
 				recognized_syntax=true
 				local escape=false
 				local start_char = input:sub(index,index)
@@ -307,13 +291,11 @@ function lexit.lex(input)
 				index=index+1
 				while index<=len do
 					local current_char=input:sub(index,index)
-					print("string char "..current_char)
 					if is_invalid(current_char) then
 						return handle_invalid()
 					end
 					if is_string_end(current_char) and escape==false and current_char==start_char  then
 						current_string = current_string..input:sub(index,index)
-						print("end str")
 						index=index+1
 						return current_string,lexit.STRLIT
 					elseif current_char=="\\" then
@@ -327,7 +309,6 @@ function lexit.lex(input)
 							escape=true
 						end
 					else 
-						print("in string, current_char: "..current_char)
 						current_string=current_string..current_char
 						index=index+1
 						escape=false

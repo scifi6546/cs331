@@ -1,5 +1,5 @@
--- rdparser4.lua
--- Glenn G. Chappell
+-- parseit.lua
+-- Glenn G. Chappell, Micholas Alexeev
 -- 2020-02-14
 --
 -- For CS F331 / CSCE A331 Spring 2020
@@ -33,7 +33,23 @@
 
 
 local rdparser4 = {}  -- Our module
-
+local STMT_LIST   = 1
+local PRINT_STMT  = 2
+local FUNC_DEF    = 3
+local FUNC_CALL   = 4
+local IF_STMT     = 5
+local WHILE_STMT  = 6
+local RETURN_STMT = 7
+local ASSN_STMT   = 8
+local STRLIT_OUT  = 9
+local CHAR_CALL   = 10
+local BIN_OP      = 11
+local UN_OP       = 12
+local NUMLIT_VAL  = 13
+local BOOLLIT_VAL = 14
+local INPUT_CALL  = 15
+local SIMPLE_VAR  = 16
+local ARRAY_VAR   = 17
 local lexer = require "lexer"
 
 
@@ -126,7 +142,13 @@ end
 -- Primary Function for Client Code
 
 -- "local" statements for parsing functions
+local parse_program
+local parse_stmt_list
+local parse_statement
+local parse_print_arg
 local parse_expr
+local parse_comp_expr
+local parse_arith_expr
 local parse_term
 local parse_factor
 
@@ -141,14 +163,82 @@ function rdparser4.parse(prog)
     init(prog)
 
     -- Get results from parsing
-    local good, ast = parse_expr()  -- Parse start symbol
+    local good, ast = parse_program()  -- Parse start symbol
     local done = atEnd()
 
     -- And return them
-    return good, done, ast
+    return good, done,ast
 end
+function parse_program()
+	return parse_stmt_list();
+end
+function parse_stmt_list()
+	local out_list = {}
+	local list_empty=true
+	while 0==0 do
+		local good,ast = parse_statement();
+		if ast==nil then
+			if list_empty then
+				return good,{STMT_LIST}
+			else
+				return good,{STMT_LIST,out_list};
+			end
+		elseif atEnd() then
+			
+		else
+			table.insert(out_list,ast)
+			list_empty=false
+		end
+		
+	end
+end
+function parse_statement()
+	advance()
+	if atEnd() then
+		return true,nil
+	end	
+	if(lexstr=="print")then
+		local good,print_args = parse_print()
+		if good==true then
+			return good,{PRINT_STMT,print_args}
+		else
+			return false,nil
+		end
+	elseif lexstr=="func" then
 
+	elseif lexstr=="if" then
 
+	elseif lexstr=="while" then
+	
+	elseif lexstr=="return" then
+	
+	elseif lexcat==lexer.ID then
+
+	else 
+		print("hit end of statement")
+		return false,nil
+	end
+
+end
+function parse_print()
+	local list = {}
+	local list_empty=true
+	while true do
+		local good,tree = parse_expr()
+		if good==false then
+			return false,nil
+		else
+			if tree~=nil then
+				table.insert(list,tree)
+				list_empty=false
+			else
+				return true,list
+			end
+
+		end
+	end
+
+end
 -- Parsing Functions
 
 -- Each of the following is a parsing function for a nonterminal in the
