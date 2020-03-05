@@ -1,0 +1,114 @@
+*** This file contains portions of parseit.lua (the solution to
+*** Assignment 4, Exercise 1) by Glenn G. Chappell.
+*** Updated: 2020-02-19
+***
+*** For CS F331 / CSCE A331 Spring 2020
+
+
+*** From near the start of the file (so you don't have to type them in):
+
+
+-- Symbolic Constants for AST
+
+local STMT_LIST   = 1
+local PRINT_STMT  = 2
+local FUNC_DEF    = 3
+local FUNC_CALL   = 4
+local IF_STMT     = 5
+local WHILE_STMT  = 6
+local RETURN_STMT = 7
+local ASSN_STMT   = 8
+local STRLIT_OUT  = 9
+local CHAR_CALL   = 10
+local BIN_OP      = 11
+local UN_OP       = 12
+local NUMLIT_VAL  = 13
+local BOOLLIT_VAL = 14
+local INPUT_CALL  = 15
+local SIMPLE_VAR  = 16
+local ARRAY_VAR   = 17
+
+
+*** From the parsing functions:
+
+
+-- parse_program
+-- Parsing function for nonterminal "program".
+-- Function init must be called before this function is called.
+function parse_program()
+    local good, ast
+
+    good, ast = parse_stmt_list()
+    return good, ast
+end
+
+
+-- parse_stmt_list
+-- Parsing function for nonterminal "stmt_list".
+-- Function init must be called before this function is called.
+function parse_stmt_list()
+    local good, ast, newast
+
+    ast = { STMT_LIST }
+    while true do
+        if lexstr ~= "print"
+          and lexstr ~= "func"
+          and lexstr ~= "if"
+          and lexstr ~= "while"
+          and lexstr ~= "return"
+          and lexcat ~= lexit.ID then
+            return true, ast
+        end
+
+        good, newast = parse_statement()
+        if not good then
+            return false, nil
+        end
+
+        table.insert(ast, newast)
+    end
+end
+
+
+-- parse_statement
+-- Parsing function for nonterminal "statement".
+-- Function init must be called before this function is called.
+function parse_statement()
+    local good, ast1, ast2, savelex, arrayflag
+
+    if matchString("print") then
+        if not matchString("(") then
+            return false, nil
+        end
+
+        if matchString(")") then
+            return true, { PRINT_STMT }
+        end
+
+        good, ast1 = parse_print_arg()
+        if not good then
+            return false, nil
+        end
+
+        ast2 = { PRINT_STMT, ast1 }
+
+        while matchString(",") do
+            good, ast1 = parse_print_arg()
+            if not good then
+                return false, nil
+            end
+
+            table.insert(ast2, ast1)
+        end
+
+        if not matchString(")") then
+            return false, nil
+        end
+
+        return true, ast2
+
+    elseif matchString("func") then
+
+
+*** Now you write the rest.
+

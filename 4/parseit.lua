@@ -1,5 +1,5 @@
 -- parseit.lua
--- Glenn G. Chappell, Micholas Alexeev
+-- Glenn G. Chappell, Nicholas Alexeev
 -- 2020-02-14
 --
 -- For CS F331 / CSCE A331 Spring 2020
@@ -10,7 +10,7 @@
 -- Grammar
 -- Start symbol: expr
 --
---     expr    ->  term { ("+" | "-") term }
+--     expr    ->  term { ("+" | s"-") term }
 --     term    ->  factor { ("*" | "/") factor }
 --     factor  ->  ID
 --              |  NUMLIT
@@ -52,7 +52,18 @@ local SIMPLE_VAR  = 16
 local ARRAY_VAR   = 17
 local lexer = require "lexer"
 
-
+function dump(o)
+    if type(o) == 'table' then
+       local s = '{ '
+       for k,v in pairs(o) do
+          if type(k) ~= 'number' then k = '"'..k..'"' end
+          s = s .. '['..k..'] = ' .. dump(v) .. ','
+       end
+       return s .. '} '
+    else
+       return tostring(o)
+    end
+ end
 -- Variables
 
 -- For lexer iteration
@@ -170,74 +181,130 @@ function rdparser4.parse(prog)
     return good, done,ast
 end
 function parse_program()
-	return parse_stmt_list();
+    local good, ast
+
+    good, ast = parse_stmt_list()
+    return good, ast
 end
 function parse_stmt_list()
-	local out_list = {}
-	local list_empty=true
-	while 0==0 do
-		local good,ast = parse_statement();
-		if ast==nil then
-			if list_empty then
-				return good,{STMT_LIST}
-			else
-				return good,{STMT_LIST,out_list};
-			end
-		elseif atEnd() then
-			
-		else
-			table.insert(out_list,ast)
-			list_empty=false
-		end
-		
-	end
+	local good, ast, newast
+
+    ast = { STMT_LIST }
+    while true do
+        print("lexstr: "..lexstr)
+        if lexstr ~= "print"
+          and lexstr ~= "func"
+          and lexstr ~= "if"
+          and lexstr ~= "while"
+          and lexstr ~= "return"
+          and lexcat ~= lexer.ID then
+            print("not id")
+            return true, ast
+        end
+
+        good, newast = parse_statement()
+        if not good then
+            print("not good")
+            print(atEnd())
+            print("")
+            return false, nil
+        end
+
+        table.insert(ast, newast)
+    end
 end
 function parse_statement()
-	advance()
-	if atEnd() then
-		return true,nil
-	end	
-	if(lexstr=="print")then
-		local good,print_args = parse_print()
-		if good==true then
-			return good,{PRINT_STMT,print_args}
-		else
-			return false,nil
-		end
-	elseif lexstr=="func" then
+    local good, ast1, ast2, savelex, arrayflag
+    print("lexcat: " .. lexcat)
+    if matchString("print") then
+        
+        if not matchString("(") then
+            return false, nil
+        end
 
-	elseif lexstr=="if" then
+        if matchString(")") then
+            return true, { PRINT_STMT }
+        end
 
-	elseif lexstr=="while" then
-	
-	elseif lexstr=="return" then
-	
-	elseif lexcat==lexer.ID then
+        good, ast1 = parse_print_arg()
+        print("from parse_print_arg")
+        print(dump(ast1))
+        if not good then
+            return false, nil
+        end
 
-	else 
-		print("hit end of statement")
-		return false,nil
-	end
+        ast2 = { PRINT_STMT, ast1 }
+        
+        while matchString(",") do
+            good, ast1 = parse_print_arg()
+            if not good then
+                return false, nil
+            end
+            
+            table.insert(ast2, ast1)
+        end
 
+        if not matchString(")") then
+            return false, nil
+        end
+   
+        return true, ast2
+
+    elseif matchString("func") then
+        local func_name = lexstr;
+        if matchCat(lexer.ID) then
+            
+            if matchString("()") then
+                local good,ast2=parse_stmt_list()
+                if not good then
+                    return false,nil
+                end
+                return good,{FUNC_DEF,func_name,{ast2}}
+            end
+        end
+    else
+        local function_name = lexstr
+        if matchCat(lexer.ID) then
+            print("matched identifier")
+            if matchString("(") and matchString(")") then
+                return true,{FUNC_CALL,function_name}
+            elseif matchString("[") then
+                local good,ast = parse_expr();
+                if not good then
+                    return false,nil
+                end
+                if matchString("]") and matchString("=") then
+                    local good,ast3 = parse_expr();
+                    return true,{"todo"}
+                else
+                    return false,nil
+                end
+            else
+                return false,nil
+            end
+        else
+            return false,nil
+        end
+    end
 end
-function parse_print()
-	local list = {}
-	local list_empty=true
-	while true do
-		local good,tree = parse_expr()
-		if good==false then
-			return false,nil
-		else
-			if tree~=nil then
-				table.insert(list,tree)
-				list_empty=false
-			else
-				return true,list
-			end
-
-		end
-	end
-
+function parse_print_arg()
+    local temp_strlit = lexstr
+    if matchCat(lexer.STRLIT) then
+        print("returning strlit "..temp_strlit)
+        return true,{STRLIT_OUT,temp_strlit}
+    elseif matchString("char(") then
+        local good,ast = parse_expr();
+        if not good then
+            return false,nil
+        end
+        return true,{CHAR_CALL,{ast}}
+    else
+        local good,ast = parse_expr();
+        if not good then
+            return false,nil
+        end
+        return true,{CHAR_CALL,{ast}}
+    end
 end
 -- Parsing Functions
 
