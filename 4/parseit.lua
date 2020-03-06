@@ -424,8 +424,58 @@ function parse_expr()
         return false, nil
     end
     local lexsave=lexstr
+    if matchString("and") or matchString("or") then
+        out_ast={out_ast}
+        table.insert(out_ast,1,{BIN_OP,lexsave})
+        local good,ast = parse_comp_expr()
+        if not good then 
+            return false,nil
+        end
+        table.insert(out_ast,ast)
+    end
+    
+    return true,out_ast
+end
+
+function parse_comp_expr()
+    local good, out_ast
+    good, out_ast = parse_arith_expr()
+    if not good then
+        print("parse_term: parse failed")
+        return false, nil
+    end
+    local lexsave=lexstr
+    if matchString("==") or
+    matchString("!=") or 
+    matchString("<") or 
+    matchString("<=") or 
+    matchString(">") or 
+    matchString(">=") then
+        out_ast={out_ast}
+        print("parse comp_expr lexsave = "..lexsave)
+        table.insert(out_ast,1,{BIN_OP,lexsave})
+        print("before insert arth_xpr: "..dump(out_ast))
+        local good,ast = parse_comp_expr()
+        if not good then 
+            return false,nil
+        end
+       
+        table.insert(out_ast,ast)
+        print("after arth_xpr: "..dump(out_ast))
+    end
+    print("returning "..dump(out_ast))
+    return true,out_ast
+end
+function parse_arith_expr()
+    local good, out_ast
+    good, out_ast = parse_term()
+    if not good then
+        print("parse_arith_expr: parse failed")
+        return false, nil
+    end
+    local lexsave=lexstr
     local temp_ast = nil
-    while matchString("and") or matchString("or") do
+    while matchString("+") or matchString("-") do
         local good,ast2 = parse_comp_expr();
         if not good then
             return false, nil
@@ -437,55 +487,9 @@ function parse_expr()
         table.insert(out_ast,1,{BIN_OP,lexsave})
         table.insert(out_ast,ast2)
         lexsave=lexstr
-        --return true,{{BIN_OP,lexsave},ast,ast2};
     end
     
     return true,out_ast
-end
-
-function parse_comp_expr()
-    local good, ast, saveop, newast
-
-    good, ast = parse_arith_expr()
-    if not good then
-        print("parse_term: parse failed")
-        return false, nil
-    end
-    local savelex=lexstr
-    if matchString("==") or 
-        matchString("!=") or 
-        matchString("<") or 
-        matchString("<=") or 
-        matchString(">") or 
-        matchString(">=")  then
-        local good,ast2 = parse_arith_expr();
-        if not good then
-            return false, nil
-        end
-        return true,{{BIN_OP,savelex},ast,ast2};
-    end
-
-    return true, ast
-end
-function parse_arith_expr()
-    local good, ast, saveop, newast
-
-    good, ast = parse_term()
-    if not good then
-        print("parse_term: parse failed")
-        return false, nil
-    end
-    local lexsave=lexstr
-    if matchString("+") or 
-        matchString("-") then
-        local good,ast2 = parse_term();
-        if not good then
-            return false, nil
-        end
-        return true,{{BIN_OP,lexsave},ast,ast2};
-    end
-
-    return true, ast
 end
 -- parse_term
 -- Parsing function for nonterminal "term".
