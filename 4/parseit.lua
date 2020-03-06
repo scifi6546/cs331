@@ -452,10 +452,10 @@ function parse_comp_expr()
     matchString(">") or 
     matchString(">=") then
         out_ast={out_ast}
-        print("parse comp_expr lexsave = "..lexsave)
+        print("parse comp_expr lexsave: "..lexsave)
         table.insert(out_ast,1,{BIN_OP,lexsave})
         print("before insert arth_xpr: "..dump(out_ast))
-        local good,ast = parse_comp_expr()
+        local good,ast = parse_arith_expr()
         if not good then 
             return false,nil
         end
@@ -476,7 +476,7 @@ function parse_arith_expr()
     local lexsave=lexstr
     local temp_ast = nil
     while matchString("+") or matchString("-") do
-        local good,ast2 = parse_comp_expr();
+        local good,ast2 = parse_term();
         if not good then
             return false, nil
         end
