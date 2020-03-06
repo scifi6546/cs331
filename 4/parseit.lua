@@ -80,10 +80,6 @@ local lexcat = 0    -- Category of current lexeme:
 
 -- Symbolic Constants for AST
 
-local BIN_OP     = 1
-local NUMLIT_VAL = 2
-local SIMPLE_VAR = 3
-
 
 -- Utility Functions
 
@@ -254,33 +250,116 @@ function parse_statement()
         local func_name = lexstr;
         if matchCat(lexer.ID) then
             
-            if matchString("()") then
+            if matchString("(") and matchString(")") then
                 local good,ast2=parse_stmt_list()
                 if not good then
                     return false,nil
                 end
-                return good,{FUNC_DEF,func_name,{ast2}}
+                if matchString("end") then
+                    return good,{FUNC_DEF,func_name,ast2}
+                else
+                    return false,nil
+                end
+            else 
+                return false,nil
             end
+        end
+    elseif matchString("if") then
+        local good,expr_ast=parse_expr();
+        if not good then
+            return false,nil;
+        end
+        local good,stmt_list_ast = parse_stmt_list();
+        if not good then
+            return false,nil;
+        end
+        local out_ast = {IF_STMT,expr_ast,stmt_list_ast}
+        --local elif_list_ast=nil
+        while matchString("elif") do
+            local good,elif_expr_ast = parse_expr()
+            if not good then
+                return false,nil;
+            end
+            local good,elif_stmt_list_ast = parse_stmt_list();
+            if not good then
+                return false,nil;
+            end
+            print("elif ast: " .. dump(elif_stmt_list_ast))
+            
+            table.insert(out_ast,elif_expr_ast);
+            table.insert(out_ast,elif_stmt_list_ast);
+            
+        end
+        local else_ast = nil
+        if matchString("else") then
+            local good=false
+            good,else_ast = parse_stmt_list()
+            if not good then
+                return false,nil;
+            end
+        end
+        if not matchString("end") then
+            return false,nil
+        end
+        
+        
+        if else_ast~=nil then
+            table.insert(out_ast,else_ast);
+        end
+        return true,out_ast
+    elseif matchString("while")then
+        local good,expr_ast = parse_expr()
+        print("while_expr ast"..dump(expr_ast))
+        if not good then
+            return false,nil
+        end
+        local good,stmt_list_ast = parse_stmt_list()
+        if not good then
+            return false,nil
+        end
+        if matchString("end") then
+            return true,{WHILE_STMT,expr_ast,stmt_list_ast};
+        else
+            return false,nil
         end
     else
         local function_name = lexstr
         if matchCat(lexer.ID) then
             print("matched identifier")
             if matchString("(") and matchString(")") then
+                print("matched func")
                 return true,{FUNC_CALL,function_name}
-            elseif matchString("[") then
-                local good,ast = parse_expr();
-                if not good then
-                    return false,nil
+            else
+                local ast={ASSN_STMT,{SIMPLE_VAR,function_name}}
+                if matchString("[") then
+                    print("matched [")
+                    local good,array_ast = parse_expr();
+                    if not good then
+                        print("failed to parse expr")
+                        return false,nil
+                    end
+                    if matchString("]")then
+                        ast={ASSN_STMT,{ARRAY_VAR,function_name,array_ast}};
+                    else
+                        print("] not found")
+                        return false,nil
+                    end
                 end
-                if matchString("]") and matchString("=") then
-                    local good,ast3 = parse_expr();
-                    return true,{"todo"}
+                if matchString("=") then
+                    print("matched = ")
+                    print("lexstr: "..lexstr)
+                    print("lexcat: "..lexcat)
+                    local good,expr_ast = parse_expr()
+                    if not good then
+                        print("after= expr not parsed")
+                        return false,nil
+                    end
+                    table.insert(ast,expr_ast)
+                    print("inserting table")
+                    return true,ast;
                 else
                     return false,nil
                 end
-            else
-                return false,nil
             end
         else
             return false,nil
