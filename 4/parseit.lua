@@ -417,54 +417,59 @@ end
 -- Parsing function for nonterminal "expr".
 -- Function init must be called before this function is called.
 function parse_expr()
-    local good, out_ast
-    good, out_ast = parse_comp_expr()
+    local good, ast, saveop, newast
+
+    good, ast = parse_comp_expr()
     if not good then
-        print("parse_term: parse failed")
         return false, nil
     end
-    local lexsave=lexstr
-    if matchString("and") or matchString("or") then
-        out_ast={out_ast}
-        table.insert(out_ast,1,{BIN_OP,lexsave})
-        local good,ast = parse_comp_expr()
-        if not good then 
-            return false,nil
+
+    while true do
+        saveop = lexstr
+        if not matchString("and") and not matchString("or") then
+            break
         end
-        table.insert(out_ast,ast)
+
+        good, newast = parse_comp_expr()
+        if not good then
+            return false, nil
+        end
+
+        ast = { { BIN_OP, saveop }, ast, newast }
     end
-    
-    return true,out_ast
+
+    return true, ast
 end
 
 function parse_comp_expr()
-    local good, out_ast
-    good, out_ast = parse_arith_expr()
+
+    local good, ast, saveop, newast
+
+    good, ast = parse_arith_expr()
     if not good then
-        print("parse_term: parse failed")
         return false, nil
     end
-    local lexsave=lexstr
-    if matchString("==") or
-    matchString("!=") or 
-    matchString("<") or 
-    matchString("<=") or 
-    matchString(">") or 
-    matchString(">=") then
-        out_ast={out_ast}
-        print("parse comp_expr lexsave: "..lexsave)
-        table.insert(out_ast,1,{BIN_OP,lexsave})
-        print("before insert arth_xpr: "..dump(out_ast))
-        local good,ast = parse_arith_expr()
-        if not good then 
-            return false,nil
+
+    while true do
+        saveop = lexstr
+        if not matchString("==") and
+        not matchString("!=") and 
+        not matchString("<") and 
+        not matchString("<=") and 
+        not matchString(">") and 
+        not matchString(">=") then
+            break
         end
-       
-        table.insert(out_ast,ast)
-        print("after arth_xpr: "..dump(out_ast))
+
+        good, newast = parse_arith_expr()
+        if not good then
+            return false, nil
+        end
+
+        ast = { { BIN_OP, saveop }, ast, newast }
     end
-    print("returning "..dump(out_ast))
-    return true,out_ast
+
+    return true, ast
 end
 function parse_arith_expr()
     local good, out_ast
