@@ -1,0 +1,2 @@
+# Output
+I am one with the Forth. The Forth is with me.
