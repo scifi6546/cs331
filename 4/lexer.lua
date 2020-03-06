@@ -80,8 +80,7 @@ function is_keyword(word)
 	return false
 end
 function is_valid(char)
-	if is_white_space(char) ==true or is_string_end(char)==true or is_string_start(char)==true or 
-		is_idstart(char)==true  or is_idbody(char) or is_punc(char) or is_op(char)==true then
+	if (char >= " " and char <= "~") or char=="\n" or char=="\t" or char=="\r" or char=="\f" then
 		return true
 	end
 	return false
@@ -96,7 +95,7 @@ function is_comment(char)
 	return false
 end
 function is_white_space(char)
-	if char ==" " or char =="\n" then
+	if char ==" " or char =="\n" or char=="\t"or char=="\r" or char=="\f" then
 		return true
 	end
 	return false
@@ -117,18 +116,20 @@ function lexit.lex(input)
 				if is_white_space(current_char) then
 					index=index+1
 
+				elseif is_invalid(current_char) then
+					return handle_invalid("")
 				else
-					break;
+					break
 
 				end
 
 		end
 
 	end
-	function handle_invalid()
-		local out_str = input:sub(index,len)
-		index=len
-		return out_str,malformed
+	function handle_invalid(input_str)
+		local out_str = input_str..input:sub(index,index)
+		index=index+1
+		return out_str,lexit.MAL
 	end
 	function handle_comment()
 				while index<=len do
@@ -170,20 +171,24 @@ function lexit.lex(input)
 		while index<=len do
 			
 			--check flags
-			local recognized_syntax=false
-
-			current_char = input:sub(index,index)
+			local recognized_syntax=false current_char = input:sub(index,index)
 			if is_white_space(current_char) then
 				recognized_syntax=true
-				handle_space()
+				local data,data2 = handle_space()
+				if data~=nil then
+					return data,data2
+				end
 
 
 			end
-
 			if is_comment(current_char) then 
 				recognized_syntax=true
 				handle_comment()
 			end
+			if is_invalid(current_char) then
+				return handle_invalid("")
+			end
+
 
 			if current_char=="!" and input:sub(index+1,index+1)=="=" then
 				recognized_syntax=true
@@ -230,7 +235,6 @@ function lexit.lex(input)
 							index=index+1
 							called =true
 						else
-						
 							break
 						end
 						
@@ -262,15 +266,16 @@ function lexit.lex(input)
 				recognized_syntax=true
 				local current_string = ""
 				while index<=len do
+					local current_char=input:sub(index,index)
 					if is_idbody(input:sub(index,index)) then
 						current_string = current_string..input:sub(index,index)
 						index=index+1
 					else 
-
-						if current_string=="" then
+						if is_invalid(current_string) then
+							return handle_invalid()
+						elseif current_string=="" then
 							return
-						end
-						if is_keyword(current_string) then
+						elseif is_keyword(current_string) then
 							return current_string,lexit.KEY
 						else
 							return current_string,lexit.ID
@@ -291,9 +296,6 @@ function lexit.lex(input)
 				index=index+1
 				while index<=len do
 					local current_char=input:sub(index,index)
-					if is_invalid(current_char) then
-						return handle_invalid()
-					end
 					if is_string_end(current_char) and escape==false and current_char==start_char  then
 						current_string = current_string..input:sub(index,index)
 						index=index+1
