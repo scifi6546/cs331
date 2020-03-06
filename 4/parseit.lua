@@ -417,23 +417,30 @@ end
 -- Parsing function for nonterminal "expr".
 -- Function init must be called before this function is called.
 function parse_expr()
-    local good, ast, saveop, newast
-
-    good, ast = parse_comp_expr()
+    local good, out_ast
+    good, out_ast = parse_comp_expr()
     if not good then
         print("parse_term: parse failed")
         return false, nil
     end
     local lexsave=lexstr
-    if matchString("and") or matchString("or") then
+    local temp_ast = nil
+    while matchString("and") or matchString("or") do
         local good,ast2 = parse_comp_expr();
         if not good then
             return false, nil
         end
-        return true,{{BIN_OP,lexsave},ast,ast2};
+        if temp_ast==nil then
+            temp_ast={}
+        end
+        out_ast={out_ast}
+        table.insert(out_ast,1,{BIN_OP,lexsave})
+        table.insert(out_ast,ast2)
+        lexsave=lexstr
+        --return true,{{BIN_OP,lexsave},ast,ast2};
     end
-
-    return true, ast
+    
+    return true,out_ast
 end
 
 function parse_comp_expr()
