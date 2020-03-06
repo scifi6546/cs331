@@ -530,8 +530,9 @@ end
 -- Function init must be called before this function is called.
 function parse_factor()
     local savelex, good, ast
-
+    
     savelex = lexstr
+    print("parse factor savelex: "..savelex)
     if matchCat(lexer.ID) then
         if matchString("(") then
             if matchString(")") then
@@ -543,6 +544,7 @@ function parse_factor()
         elseif matchString("[") then
             local good,ast = parse_expr();
             if not good then
+                print("did not parse array")
                 return false,nil
             end
             if matchString("]") then
@@ -552,6 +554,16 @@ function parse_factor()
             end
         else
             return true,{SIMPLE_VAR,savelex}
+        end
+    elseif matchString("input") then
+        if matchString("(") then
+            if matchString(")") then
+                return true,{INPUT_CALL}
+            else
+                return false,nil
+            end
+        else 
+            return false,nil
         end
     elseif matchString("+") or matchString("-") or matchString("not") then
         local good,ast = parse_factor()
