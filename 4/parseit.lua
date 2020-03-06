@@ -213,7 +213,7 @@ function parse_statement()
     local good, ast1, ast2, savelex, arrayflag
     print("lexcat: " .. lexcat)
     if matchString("print") then
-        
+        print("handeling print")
         if not matchString("(") then
             return false, nil
         end
@@ -226,6 +226,7 @@ function parse_statement()
         print("from parse_print_arg")
         print(dump(ast1))
         if not good then
+            print("failed parse print arg")
             return false, nil
         end
 
@@ -234,6 +235,7 @@ function parse_statement()
         while matchString(",") do
             good, ast1 = parse_print_arg()
             if not good then
+                print("failed to parse args after comma")
                 return false, nil
             end
             
@@ -323,6 +325,12 @@ function parse_statement()
         else
             return false,nil
         end
+    elseif matchString("return") then
+        local good,ast = parse_expr()
+        if not good then 
+            return false,nil
+        end
+        return true,{RETURN_STMT,ast}
     else
         local function_name = lexstr
         if matchCat(lexer.ID) then
@@ -370,21 +378,24 @@ function parse_statement()
 end
 function parse_print_arg()
     local temp_strlit = lexstr
-    if matchCat(lexer.STRLIT) then
-        print("returning strlit "..temp_strlit)
-        return true,{STRLIT_OUT,temp_strlit}
-    elseif matchString("char(") then
+    
+    if matchString("char") then
         local good,ast = parse_expr();
+        
         if not good then
+            print("failed to parse char")
             return false,nil
         end
-        return true,{CHAR_CALL,{ast}}
+        return true,{CHAR_CALL,ast}
+    elseif matchCat(lexer.STRLIT) then
+        print("returning strlit "..temp_strlit)
+        return true,{STRLIT_OUT,temp_strlit}
     else
         local good,ast = parse_expr();
         if not good then
             return false,nil
         end
-        return true,{CHAR_CALL,{ast}}
+        return true,ast
     end
 end
 -- Parsing Functions
@@ -408,31 +419,67 @@ end
 function parse_expr()
     local good, ast, saveop, newast
 
-    good, ast = parse_term()
+    good, ast = parse_comp_expr()
     if not good then
         print("parse_term: parse failed")
         return false, nil
     end
-
-    while true do
-        saveop = lexstr
-        if not matchString("+") and not matchString("-") then
-            break
-        end
-
-        good, newast = parse_term()
+    local lexsave=lexstr
+    if matchString("and") or matchString("or") then
+        local good,ast2 = parse_comp_expr();
         if not good then
-            print("parse_term 2: parse failed")
             return false, nil
         end
-
-        ast = { { BIN_OP, saveop }, ast, newast }
+        return true,{{BIN_OP,lexsave},ast,ast2};
     end
 
     return true, ast
 end
 
+function parse_comp_expr()
+    local good, ast, saveop, newast
 
+    good, ast = parse_arith_expr()
+    if not good then
+        print("parse_term: parse failed")
+        return false, nil
+    end
+    local savelex=lexstr
+    if matchString("==") or 
+        matchString("!=") or 
+        matchString("<") or 
+        matchString("<=") or 
+        matchString(">") or 
+        matchString(">=")  then
+        local good,ast2 = parse_arith_expr();
+        if not good then
+            return false, nil
+        end
+        return true,{{BIN_OP,savelex},ast,ast2};
+    end
+
+    return true, ast
+end
+function parse_arith_expr()
+    local good, ast, saveop, newast
+
+    good, ast = parse_term()
+    if not good then
+        print("parse_term: parse failed")
+        return false, nil
+    end
+    local lexsave=lexstr
+    if matchString("+") or 
+        matchString("-") then
+        local good,ast2 = parse_term();
+        if not good then
+            return false, nil
+        end
+        return true,{{BIN_OP,lexsave},ast,ast2};
+    end
+
+    return true, ast
+end
 -- parse_term
 -- Parsing function for nonterminal "term".
 -- Function init must be called before this function is called.
@@ -440,13 +487,13 @@ function parse_term()
     local good, ast, saveop, newast
     good, ast = parse_factor()
     if not good then
-        print("failed to parse factor")
+        print("in parse term: failed to parse factor")
         return false, nil
     end
 
     while true do
         saveop = lexstr
-        if not matchString("*") and not matchString("/") then
+        if not matchString("*") and not matchString("/") and not matchString("%") then
             break
         end
 
@@ -474,10 +521,11 @@ function parse_factor()
             if matchString(")") then
                 return true,{FUNC_CALL,savelex}
             else
+                print("did not match string )")
                 return false,nil
             end
         elseif matchString("[") then
-            local good,ast = parse_expr()
+            local good,ast = parse_expr();
             if not good then
                 return false,nil
             end
@@ -489,6 +537,12 @@ function parse_factor()
         else
             return true,{SIMPLE_VAR,savelex}
         end
+    elseif matchString("+") or matchString("-") or matchString("not") then
+        local good,ast = parse_factor()
+        if not good then
+            return false,nil
+        end
+        return true,{{UN_OP,savelex},ast}
     elseif matchString("false") then
         return true,{BOOLLIT_VAL,"false"}
     elseif matchString("true") then
