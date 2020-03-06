@@ -52,18 +52,6 @@ local SIMPLE_VAR  = 16
 local ARRAY_VAR   = 17
 local lexer = require "lexer"
 
-function dump(o)
-    if type(o) == 'table' then
-       local s = '{ '
-       for k,v in pairs(o) do
-          if type(k) ~= 'number' then k = '"'..k..'"' end
-          s = s .. '['..k..'] = ' .. dump(v) .. ','
-       end
-       return s .. '} '
-    else
-       return tostring(o)
-    end
- end
 -- Variables
 
 -- For lexer iteration
@@ -97,6 +85,7 @@ local function advance()
     else
         lexstr, lexcat = "", 0
     end
+    print("advance lexstr: "..lexstr)
 end
 
 
@@ -224,7 +213,6 @@ function parse_statement()
 
         good, ast1 = parse_print_arg()
         print("from parse_print_arg")
-        print(dump(ast1))
         if not good then
             print("failed parse print arg")
             return false, nil
@@ -287,7 +275,6 @@ function parse_statement()
             if not good then
                 return false,nil;
             end
-            print("elif ast: " .. dump(elif_stmt_list_ast))
             
             table.insert(out_ast,elif_expr_ast);
             table.insert(out_ast,elif_stmt_list_ast);
@@ -312,7 +299,6 @@ function parse_statement()
         return true,out_ast
     elseif matchString("while")then
         local good,expr_ast = parse_expr()
-        print("while_expr ast"..dump(expr_ast))
         if not good then
             return false,nil
         end
@@ -359,7 +345,6 @@ function parse_statement()
                     print("lexstr: "..lexstr)
                     print("lexcat: "..lexcat)
                     local good,expr_ast = parse_expr()
-                    print("expr_ast: "..dump(expr_ast))
                     if not good then
                         print("after= expr not parsed")
                         return false,nil
