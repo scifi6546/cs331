@@ -187,7 +187,7 @@ function parse_stmt_list()
 
     ast = { STMT_LIST }
     while true do
-        print("lexstr: "..lexstr)
+        print("parse_stmt_list lexstr: "..lexstr)
         if lexstr ~= "print"
           and lexstr ~= "func"
           and lexstr ~= "if"
@@ -200,7 +200,7 @@ function parse_stmt_list()
 
         good, newast = parse_statement()
         if not good then
-            print("not good")
+            print("stmt not good")
             print(atEnd())
             print("")
             return false, nil
@@ -267,6 +267,7 @@ function parse_statement()
     elseif matchString("if") then
         local good,expr_ast=parse_expr();
         if not good then
+            print("parse_statemnt if: parse_expr failed");
             return false,nil;
         end
         local good,stmt_list_ast = parse_stmt_list();
@@ -350,6 +351,7 @@ function parse_statement()
                     print("lexstr: "..lexstr)
                     print("lexcat: "..lexcat)
                     local good,expr_ast = parse_expr()
+                    print("expr_ast: "..dump(expr_ast))
                     if not good then
                         print("after= expr not parsed")
                         return false,nil
@@ -408,6 +410,7 @@ function parse_expr()
 
     good, ast = parse_term()
     if not good then
+        print("parse_term: parse failed")
         return false, nil
     end
 
@@ -419,6 +422,7 @@ function parse_expr()
 
         good, newast = parse_term()
         if not good then
+            print("parse_term 2: parse failed")
             return false, nil
         end
 
@@ -434,9 +438,9 @@ end
 -- Function init must be called before this function is called.
 function parse_term()
     local good, ast, saveop, newast
-
     good, ast = parse_factor()
     if not good then
+        print("failed to parse factor")
         return false, nil
     end
 
@@ -466,10 +470,33 @@ function parse_factor()
 
     savelex = lexstr
     if matchCat(lexer.ID) then
-        return true, { SIMPLE_VAR, savelex }
+        if matchString("(") then
+            if matchString(")") then
+                return true,{FUNC_CALL,savelex}
+            else
+                return false,nil
+            end
+        elseif matchString("[") then
+            local good,ast = parse_expr()
+            if not good then
+                return false,nil
+            end
+            if matchString("]") then
+                return true,{ARRAY_VAR,savelex,ast}
+            else
+                return false,nil
+            end
+        else
+            return true,{SIMPLE_VAR,savelex}
+        end
+    elseif matchString("false") then
+        return true,{BOOLLIT_VAL,"false"}
+    elseif matchString("true") then
+        return true,{BOOLLIT_VAL,"true"}
     elseif matchCat(lexer.NUMLIT) then
         return true, { NUMLIT_VAL, savelex }
     elseif matchString("(") then
+        print("matching (")
         good, ast = parse_expr()
         if not good then
             return false, nil
@@ -480,6 +507,7 @@ function parse_factor()
         end
 
         return true, ast
+    
     else
         return false, nil
     end
