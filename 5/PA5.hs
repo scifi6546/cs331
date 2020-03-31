@@ -23,13 +23,10 @@ is_eq tuple
 -- operator ##
 (##) :: Eq a => [a] -> [a] -> Int
 list_a ## list_b = foldr1 (+) (map (\_ -> 1) (filter (is_eq) (zip list_a list_b)))  -- DUMMY; REWRITE THIS!!!
-(&&) :: Eq a => [a] -> [a] -> [(a,a)]
-list_a && list_b = filter (\a -> True) (zip list_a list_b)
-ret_true _ = True
 
 -- filterAB
 filterAB :: (a -> Bool) -> [a] -> [b] -> [b]
-filterAB _ _ bs = bs  -- DUMMY; REWRITE THIS!!!
+filterAB stmt a_list b_list = map (\tuple -> snd tuple) (filter (\tuple ->stmt (fst tuple)) (zip a_list b_list))  -- DUMMY; REWRITE THIS!!!
 
 
 -- sumEvenOdd
