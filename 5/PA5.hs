@@ -16,12 +16,16 @@ collatzCounts = [42..]  -- DUMMY; REWRITE THIS!!!
 -- findList
 findList :: Eq a => [a] -> [a] -> Maybe Int
 findList _ _ = Just 42  -- DUMMY; REWRITE THIS!!!
-
-
+is_eq:: Eq a =>(a,a) ->Bool
+is_eq tuple
+    | fst tuple == snd tuple = True 
+    | otherwise = False
 -- operator ##
 (##) :: Eq a => [a] -> [a] -> Int
-_ ## _ = 42  -- DUMMY; REWRITE THIS!!!
-
+list_a ## list_b = foldr1 (+) (map (\_ -> 1) (filter (is_eq) (zip list_a list_b)))  -- DUMMY; REWRITE THIS!!!
+(&&) :: Eq a => [a] -> [a] -> [(a,a)]
+list_a && list_b = filter (\a -> True) (zip list_a list_b)
+ret_true _ = True
 
 -- filterAB
 filterAB :: (a -> Bool) -> [a] -> [b] -> [b]
