@@ -1,5 +1,5 @@
--- rdparser4.lua
--- Glenn G. Chappell
+-- parseit.lua
+-- Glenn G. Chappell, Nicholas Alexeev
 -- 2020-02-14
 --
 -- For CS F331 / CSCE A331 Spring 2020
@@ -10,7 +10,7 @@
 -- Grammar
 -- Start symbol: expr
 --
---     expr    ->  term { ("+" | "-") term }
+--     expr    ->  term { ("+" | s"-") term }
 --     term    ->  factor { ("*" | "/") factor }
 --     factor  ->  ID
 --              |  NUMLIT
@@ -33,9 +33,24 @@
 
 
 local rdparser4 = {}  -- Our module
-
+local STMT_LIST   = 1
+local PRINT_STMT  = 2
+local FUNC_DEF    = 3
+local FUNC_CALL   = 4
+local IF_STMT     = 5
+local WHILE_STMT  = 6
+local RETURN_STMT = 7
+local ASSN_STMT   = 8
+local STRLIT_OUT  = 9
+local CHAR_CALL   = 10
+local BIN_OP      = 11
+local UN_OP       = 12
+local NUMLIT_VAL  = 13
+local BOOLLIT_VAL = 14
+local INPUT_CALL  = 15
+local SIMPLE_VAR  = 16
+local ARRAY_VAR   = 17
 local lexer = require "lexer"
-
 
 -- Variables
 
@@ -52,10 +67,6 @@ local lexcat = 0    -- Category of current lexeme:
 
 
 -- Symbolic Constants for AST
-
-local BIN_OP     = 1
-local NUMLIT_VAL = 2
-local SIMPLE_VAR = 3
 
 
 -- Utility Functions
@@ -126,7 +137,13 @@ end
 -- Primary Function for Client Code
 
 -- "local" statements for parsing functions
+local parse_program
+local parse_stmt_list
+local parse_statement
+local parse_print_arg
 local parse_expr
+local parse_comp_expr
+local parse_arith_expr
 local parse_term
 local parse_factor
 
@@ -141,14 +158,207 @@ function rdparser4.parse(prog)
     init(prog)
 
     -- Get results from parsing
-    local good, ast = parse_expr()  -- Parse start symbol
+    local good, ast = parse_program()  -- Parse start symbol
     local done = atEnd()
 
     -- And return them
-    return good, done, ast
+    return good, done,ast
 end
+function parse_program()
+    local good, ast
 
+    good, ast = parse_stmt_list()
+    return good, ast
+end
+function parse_stmt_list()
+	local good, ast, newast
 
+    ast = { STMT_LIST }
+    while true do
+        if lexstr ~= "print"
+          and lexstr ~= "func"
+          and lexstr ~= "if"
+          and lexstr ~= "while"
+          and lexstr ~= "return"
+          and lexcat ~= lexer.ID then
+            return true, ast
+        end
+
+        good, newast = parse_statement()
+        if not good then
+            return false, nil
+        end
+
+        table.insert(ast, newast)
+    end
+end
+function parse_statement()
+    local good, ast1, ast2, savelex, arrayflag
+    if matchString("print") then
+        if not matchString("(") then
+            return false, nil
+        end
+
+        if matchString(")") then
+            return true, { PRINT_STMT }
+        end
+
+        good, ast1 = parse_print_arg()
+        if not good then
+            return false, nil
+        end
+
+        ast2 = { PRINT_STMT, ast1 }
+        
+        while matchString(",") do
+            good, ast1 = parse_print_arg()
+            if not good then
+                return false, nil
+            end
+            
+            table.insert(ast2, ast1)
+        end
+
+        if not matchString(")") then
+            return false, nil
+        end
+   
+        return true, ast2
+
+    elseif matchString("func") then
+        local func_name = lexstr;
+        if matchCat(lexer.ID) then
+            
+            if matchString("(") and matchString(")") then
+                local good,ast2=parse_stmt_list()
+                if not good then
+                    return false,nil
+                end
+                if matchString("end") then
+                    return good,{FUNC_DEF,func_name,ast2}
+                else
+                    return false,nil
+                end
+            else 
+                return false,nil
+            end
+        end
+    elseif matchString("if") then
+        local good,expr_ast=parse_expr();
+        if not good then
+            return false,nil;
+        end
+        local good,stmt_list_ast = parse_stmt_list();
+        if not good then
+            return false,nil;
+        end
+        local out_ast = {IF_STMT,expr_ast,stmt_list_ast}
+        --local elif_list_ast=nil
+        while matchString("elif") do
+            local good,elif_expr_ast = parse_expr()
+            if not good then
+                return false,nil;
+            end
+            local good,elif_stmt_list_ast = parse_stmt_list();
+            if not good then
+                return false,nil;
+            end
+            
+            table.insert(out_ast,elif_expr_ast);
+            table.insert(out_ast,elif_stmt_list_ast);
+            
+        end
+        local else_ast = nil
+        if matchString("else") then
+            local good=false
+            good,else_ast = parse_stmt_list()
+            if not good then
+                return false,nil;
+            end
+        end
+        if not matchString("end") then
+            return false,nil
+        end
+        
+        
+        if else_ast~=nil then
+            table.insert(out_ast,else_ast);
+        end
+        return true,out_ast
+    elseif matchString("while")then
+        local good,expr_ast = parse_expr()
+        if not good then
+            return false,nil
+        end
+        local good,stmt_list_ast = parse_stmt_list()
+        if not good then
+            return false,nil
+        end
+        if matchString("end") then
+            return true,{WHILE_STMT,expr_ast,stmt_list_ast};
+        else
+            return false,nil
+        end
+    elseif matchString("return") then
+        local good,ast = parse_expr()
+        if not good then 
+            return false,nil
+        end
+        return true,{RETURN_STMT,ast}
+    else
+        local function_name = lexstr
+        if matchCat(lexer.ID) then
+            if matchString("(") and matchString(")") then
+                return true,{FUNC_CALL,function_name}
+            else
+                local ast={ASSN_STMT,{SIMPLE_VAR,function_name}}
+                if matchString("[") then
+                    local good,array_ast = parse_expr();
+                    if not good then
+                        return false,nil
+                    end
+                    if matchString("]")then
+                        ast={ASSN_STMT,{ARRAY_VAR,function_name,array_ast}};
+                    else
+                        return false,nil
+                    end
+                end
+                if matchString("=") then
+                    local good,expr_ast = parse_expr()
+                    if not good then
+                        return false,nil
+                    end
+                    table.insert(ast,expr_ast)
+                    return true,ast;
+                else
+                    return false,nil
+                end
+            end
+        else
+            return false,nil
+        end
+    end
+end
+function parse_print_arg()
+    local temp_strlit = lexstr
+    
+    if matchString("char") then
+        local good,ast = parse_expr();
+        
+        if not good then
+            return false,nil
+        end
+        return true,{CHAR_CALL,ast}
+    elseif matchCat(lexer.STRLIT) then
+        return true,{STRLIT_OUT,temp_strlit}
+    else
+        local good,ast = parse_expr();
+        if not good then
+            return false,nil
+        end
+        return true,ast
+    end
+end
 -- Parsing Functions
 
 -- Each of the following is a parsing function for a nonterminal in the
@@ -170,18 +380,18 @@ end
 function parse_expr()
     local good, ast, saveop, newast
 
-    good, ast = parse_term()
+    good, ast = parse_comp_expr()
     if not good then
         return false, nil
     end
 
     while true do
         saveop = lexstr
-        if not matchString("+") and not matchString("-") then
+        if not matchString("and") and not matchString("or") then
             break
         end
 
-        good, newast = parse_term()
+        good, newast = parse_comp_expr()
         if not good then
             return false, nil
         end
@@ -192,13 +402,65 @@ function parse_expr()
     return true, ast
 end
 
+function parse_comp_expr()
 
+    local good, ast, saveop, newast
+
+    good, ast = parse_arith_expr()
+    if not good then
+        return false, nil
+    end
+
+    while true do
+        saveop = lexstr
+        if not matchString("==") and
+        not matchString("!=") and 
+        not matchString("<") and 
+        not matchString("<=") and 
+        not matchString(">") and 
+        not matchString(">=") then
+            break
+        end
+
+        good, newast = parse_arith_expr()
+        if not good then
+            return false, nil
+        end
+
+        ast = { { BIN_OP, saveop }, ast, newast }
+    end
+
+    return true, ast
+end
+function parse_arith_expr()
+    local good, out_ast
+    good, out_ast = parse_term()
+    if not good then
+        return false, nil
+    end
+    local lexsave=lexstr
+    local temp_ast = nil
+    while matchString("+") or matchString("-") do
+        local good,ast2 = parse_term();
+        if not good then
+            return false, nil
+        end
+        if temp_ast==nil then
+            temp_ast={}
+        end
+        out_ast={out_ast}
+        table.insert(out_ast,1,{BIN_OP,lexsave})
+        table.insert(out_ast,ast2)
+        lexsave=lexstr
+    end
+    
+    return true,out_ast
+end
 -- parse_term
 -- Parsing function for nonterminal "term".
 -- Function init must be called before this function is called.
 function parse_term()
     local good, ast, saveop, newast
-
     good, ast = parse_factor()
     if not good then
         return false, nil
@@ -206,7 +468,7 @@ function parse_term()
 
     while true do
         saveop = lexstr
-        if not matchString("*") and not matchString("/") then
+        if not matchString("*") and not matchString("/") and not matchString("%") then
             break
         end
 
@@ -227,10 +489,48 @@ end
 -- Function init must be called before this function is called.
 function parse_factor()
     local savelex, good, ast
-
+    
     savelex = lexstr
     if matchCat(lexer.ID) then
-        return true, { SIMPLE_VAR, savelex }
+        if matchString("(") then
+            if matchString(")") then
+                return true,{FUNC_CALL,savelex}
+            else
+                return false,nil
+            end
+        elseif matchString("[") then
+            local good,ast = parse_expr();
+            if not good then
+                return false,nil
+            end
+            if matchString("]") then
+                return true,{ARRAY_VAR,savelex,ast}
+            else
+                return false,nil
+            end
+        else
+            return true,{SIMPLE_VAR,savelex}
+        end
+    elseif matchString("input") then
+        if matchString("(") then
+            if matchString(")") then
+                return true,{INPUT_CALL}
+            else
+                return false,nil
+            end
+        else 
+            return false,nil
+        end
+    elseif matchString("+") or matchString("-") or matchString("not") then
+        local good,ast = parse_factor()
+        if not good then
+            return false,nil
+        end
+        return true,{{UN_OP,savelex},ast}
+    elseif matchString("false") then
+        return true,{BOOLLIT_VAL,"false"}
+    elseif matchString("true") then
+        return true,{BOOLLIT_VAL,"true"}
     elseif matchCat(lexer.NUMLIT) then
         return true, { NUMLIT_VAL, savelex }
     elseif matchString("(") then
@@ -244,6 +544,7 @@ function parse_factor()
         end
 
         return true, ast
+    
     else
         return false, nil
     end
