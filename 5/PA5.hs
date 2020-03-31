@@ -6,11 +6,15 @@
 -- Solutions to Assignment 5 Exercise B
 
 module PA5 where
-
-
+collatz a 
+    | a == 0 = 0
+    | a == 1 = 0
+    | a `mod` 2 == 0 = 1 + collatz (a `div` 2)
+    | a `mod` 2 == 1 = 1 + collatz (3*a+1)
+    | otherwise = 2
 -- collatzCounts
 collatzCounts :: [Integer]
-collatzCounts = [42..]  -- DUMMY; REWRITE THIS!!!
+collatzCounts = map collatz [1..]  -- DUMMY; REWRITE THIS!!!
 
 
 -- findList
@@ -22,7 +26,7 @@ is_eq tuple
     | otherwise = False
 -- operator ##
 (##) :: Eq a => [a] -> [a] -> Int
-list_a ## list_b = foldr1 (+) (map (\_ -> 1) (filter (is_eq) (zip list_a list_b)))  -- DUMMY; REWRITE THIS!!!
+list_a ## list_b = foldr1 (+) (map (\_ -> 1) (filter (is_eq) (zip list_a list_b)))
 
 -- filterAB
 filterAB :: (a -> Bool) -> [a] -> [b] -> [b]
