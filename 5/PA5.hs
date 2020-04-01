@@ -14,7 +14,7 @@ collatz a
     | otherwise = 2
 -- collatzCounts
 collatzCounts :: [Integer]
-collatzCounts = map collatz [1..]  -- DUMMY; REWRITE THIS!!!
+collatzCounts = map collatz [1..] 
 
 
 -- findList
