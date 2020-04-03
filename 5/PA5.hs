@@ -1,5 +1,5 @@
--- PA5.hs  INCOMPLETE
--- Glenn G. Chappell
+-- PA5.hs 
+-- Nicholas Alexeev, framework by Glenn G. Chappell
 -- 2020-03-24
 --
 -- For CS F331 / CSCE A331 Spring 2020
@@ -42,15 +42,12 @@ filterAB stmt a_list b_list = map (\tuple -> snd tuple) (filter (\tuple ->stmt (
 
 -- sumEvenOdd
 sumEvenOdd :: Num a => [a] -> (a, a)
-{-
-  The assignment requires sumEvenOdd to be written using a fold.
-  Something like this:
-
-    sumEvenOdd xs = fold* ... xs where
-        ...
-
-  Above, "..." should be replaced by other code. The "fold*" must be
-  one of the following: foldl, foldr, foldl1, foldr1.
--}
-sumEvenOdd _ = (0, 0)  -- DUMMY; REWRITE THIS!!!
+splitList :: Num a => [a] -> [(a,a)]
+splitList list
+  | length list == 0=[]
+  | length list == 1 = [(head list,zero)]
+  | otherwise = (list !! 0,list !! 1) : splitList (drop 2 list)
+  where
+    zero = fromIntegral 0
+sumEvenOdd list = foldr (\a b ->(fst a+fst b,snd a +snd b)) (0,0) (splitList list)
 

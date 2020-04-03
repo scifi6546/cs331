@@ -1,3 +1,5 @@
+-- Nicholas Alexeevb
+-- Program For calculating median of list
 import Data.List (sort)
 getArr arr = do
           item <- getLine
