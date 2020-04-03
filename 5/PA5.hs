@@ -6,6 +6,7 @@
 -- Solutions to Assignment 5 Exercise B
 
 module PA5 where
+import Data.List (isPrefixOf)
 collatz a 
     | a == 0 = 0
     | a == 1 = 0
@@ -16,21 +17,27 @@ collatz a
 collatzCounts :: [Integer]
 collatzCounts = map collatz [1..] 
 
-
+findListT :: Eq a => [a] -> [a] -> Int -> Maybe Int
+findListT prefix list index
+    | length list == 0 = Nothing
+    | is_pre == True =Just index
+    | is_pre == False = findListT prefix (drop 1 list) (index+1)
+    where
+      is_pre = isPrefixOf prefix list
 -- findList
 findList :: Eq a => [a] -> [a] -> Maybe Int
-findList _ _ = Just 42  -- DUMMY; REWRITE THIS!!!
+findList prefix list = findListT prefix list 0
 is_eq:: Eq a =>(a,a) ->Bool
 is_eq tuple
     | fst tuple == snd tuple = True 
     | otherwise = False
 -- operator ##
 (##) :: Eq a => [a] -> [a] -> Int
-list_a ## list_b = foldr1 (+) (map (\_ -> 1) (filter (is_eq) (zip list_a list_b)))
+list_a ## list_b = foldr (+) 0 (map (\_ -> 1) (filter (is_eq) (zip list_a list_b)))
 
 -- filterAB
 filterAB :: (a -> Bool) -> [a] -> [b] -> [b]
-filterAB stmt a_list b_list = map (\tuple -> snd tuple) (filter (\tuple ->stmt (fst tuple)) (zip a_list b_list))  -- DUMMY; REWRITE THIS!!!
+filterAB stmt a_list b_list = map (\tuple -> snd tuple) (filter (\tuple ->stmt (fst tuple)) (zip a_list b_list))
 
 
 -- sumEvenOdd
