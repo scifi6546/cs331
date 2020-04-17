@@ -1,8 +1,8 @@
--- interpit.lua  INCOMPLETE
--- Glenn G. Chappell
+-- interpit.lua
+-- Nicholas Alexeev and Glenn G. Chappell
 -- 2020-04-10
 --
--- For CS F331 / CSCE A331 Spring 2020
+-- For CS F331
 -- Interpret AST from parseit.parse
 -- For Assignment 6, Exercise 1
 
@@ -200,7 +200,6 @@ function interpit.interp(ast, state, incall, outcall)
     local is_expr
     local eval_array
 
-
     -- interp_stmt_list
     -- Execute a statement list, given its AST.
     function interp_stmt_list(ast)
@@ -244,7 +243,6 @@ function interpit.interp(ast, state, incall, outcall)
     end
 
     function is_expr(ast)
-        print(astToStr(ast))
         if ast[1] == SIMPLE_VAR or ast[1] == INPUT_CALL or ast[1] == CHAR_CALL or 
             ast[1] == BIN_OP or ast[1] == UN_OP  or ast[1] == NUMLIT_VAL or ast[1] == BOOLLIT_VAL  then
             return true
@@ -254,17 +252,12 @@ function interpit.interp(ast, state, incall, outcall)
                     return true
                 end
             end
-            print(astToStr(ast))
-            print(astToStr(ast[1]))
-            print(type(ast[1]))
-            print("not expr")
             return false
         end
     end
     -- interp_stmt
     -- Execute a statement, given its AST.
     function interp_stmt(ast)
-        print(astToStr(ast))
         if ast[1] == PRINT_STMT then
             for i = 2, #ast do
                 if ast[i][1] == STRLIT_OUT then
@@ -273,11 +266,9 @@ function interpit.interp(ast, state, incall, outcall)
                     outcall(handle_backslash_escapes(
                              str:sub(2,str:len()-1)))
                 elseif ast[i][1] == CHAR_CALL then
-                    print("in prnt_statement char_call")
-                    print(astToStr(ast))
-                    print(astToStr(ast[i]))
                     outcall(eval_expr(ast[i]))
                 else
+
                     local value = eval_expr(ast[i])
                     outcall(numToStr(value))
                 end
@@ -305,7 +296,6 @@ function interpit.interp(ast, state, incall, outcall)
                     end
                     i=i+2
                 else
-                    print("not expr")
                     interp_stmt_list(ast[i])
                     break
                 end
@@ -316,13 +306,14 @@ function interpit.interp(ast, state, incall, outcall)
                 interp_stmt_list(ast[3])
             end
         elseif ast[1] == RETURN_STMT then
-            print(astToStr(ast))
-            print("HAVE NOT HANDLED RETURN_STMT YET!!!")
+            local var_value = eval_expr(ast[2])
+            state.v["return"]=var_value
         elseif ast[1] == ASSN_STMT then
             if ast[2][1]==SIMPLE_VAR then
                 local var = ast[2][2]
                 local var_value = eval_expr(ast[3])
                 state.v[var]=var_value
+
             elseif ast[2][1] == ARRAY_VAR then
                 local var_name = ast[2][2]
                 if state.a[ast[2][2]] == nil then
@@ -330,44 +321,15 @@ function interpit.interp(ast, state, incall, outcall)
                 end
                 state.a[ast[2][2]][eval_expr(ast[2][3])]=eval_expr(ast[3])
             else
-                print("INVALID VARLAIBLE TYPE")
+                print("INVALID VARLAIBLE TYPE ASSIGNED TO")
                 print(astToStr(ast))
                 
 
             end
-        elseif ast[1] == STRLIT_OUT then
-            print(astToStr(ast))
-            outcall(ast[2])
-            print("HAVE NOT HANDLED STRLIT_STMT YET!!!")
-        elseif ast[1] == CHAR_CALL then 
-            print(astToStr(ast))
-            outcall(ast[2])
-            print("HAVE NOT HANDLED CHAR_CALL YET!!!")
-        elseif ast[1] == BIN_OP then
-            print(astToStr(ast))
-            print("HAVE NOT HANDLED BIN_OP YET!!!")
-        elseif ast[1] == UN_OP then
-            print(astToStr(ast))
-            print("HAVE NOT HANDLED UN_OP YET!!!")
-        elseif ast[1] == NUMLIT_VAL then 
-            print(astToStr(ast))
-            print("HAVE NOT HANDLED NUMLIT_VAL YET!!!")
-        elseif ast[1] == BOOLLIT_VAL then
-            print(astToStr(ast))
-            print("HAVE NOT HANDLED BOOLLIT_VAL YET!!!")
-        elseif ast[1] == INPUT_CALL then
-            print(astToStr(ast))
-            print("HAVE NOT HANDLED INPUT YET!!!")
-        elseif ast[1] == SIMPLE_VAR then
-            print(astToStr(ast))
-            print("HAVE NOT HANDLED SIMPLE_VAR YET!!!")
-        elseif ast[1] == ARRAY_VAR then
-            print(astToStr(ast))
-            print("HAVE NOT HANDLED ARRAY_VAR YET!!!")
         else
+            print("INVALID STATEMENT")
             print(astToStr(ast))
-            print(ast[1])
-            print("THIS KIND OF STATEMENT NOT HANDLED YET!!!")
+
         end
     end
 
@@ -376,7 +338,6 @@ function interpit.interp(ast, state, incall, outcall)
     -- Evaluate an expression, given its AST. The return value is the
     -- value of the expression.
     function eval_expr(ast)
-        print(astToStr(ast))
         if ast == nil then
             return 0
         elseif ast[1] == NUMLIT_VAL then
@@ -384,6 +345,7 @@ function interpit.interp(ast, state, incall, outcall)
         elseif ast[1] == BOOLLIT_VAL then
             return boolToInt(strToBool(ast[2]))
         elseif ast[1] == SIMPLE_VAR then
+            
             if state.v[ast[2]] ~=nil then
                 return state.v[ast[2]]
             else
@@ -404,18 +366,25 @@ function interpit.interp(ast, state, incall, outcall)
                 end
             end
         elseif ast[1] == CHAR_CALL then
-            print("in eval_expr char call")
-            print(astToStr(ast))
-            print(astToStr(ast[2]))
-            print(astToStr(ast[2][1]))
             local char_code = eval_expr(ast[2])
-            print("left recursive eval_expr")
-            print(char_code)
             if char_code>=0 and char_code<=255 then
                 return string.char(char_code)
             else
-                print("value was invalid")
                 return string.char(0)
+            end
+        elseif ast[1] == FUNC_CALL then
+            local func_body = state.f[ast[2]]
+            local pre_ret = state.v["return"]
+            interp_stmt_list(func_body)
+            local post_ret = state.v["return"]
+            if pre_ret == post_ret then
+                if pre_ret~=nil then
+                    return post_ret;
+                else
+                    return 0
+                end
+            else
+                return post_ret
             end
         elseif ast[1][1] == BIN_OP then
             if ast[1][2] == "+" then 
@@ -455,7 +424,8 @@ function interpit.interp(ast, state, incall, outcall)
                     return numToInt(eval_expr(ast[2]) % eval_expr(ast[3]))
                 end
             else
-                print("THIS BIN_OP NOT HANDLED YET")
+                print("ERROR INVALID BIN OP")
+                print(astToStr(ast))
                 return 0
             end
         elseif ast[1][1] == UN_OP then
@@ -471,13 +441,13 @@ function interpit.interp(ast, state, incall, outcall)
                     return 0
                 end
             else
-                print("THIS UN_OP NOT HANDLED YET")
+                print("INVALID UNARY OPERATOR")
+                print(astToStr(ast))
                 return 0
             end
         else
-            print("THIS KIND OF EXPRESSION NOT HANDLED YET!!!")
+            print("INVALID EXPRESSION")
             print(astToStr(ast))
-            print(astToStr(ast[1]))
             
             return 42  -- DUMMY!!!
         end
@@ -494,4 +464,3 @@ end
 
 
 return interpit
-
