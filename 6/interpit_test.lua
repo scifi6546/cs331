@@ -1,7 +1,9 @@
 #!/usr/bin/env lua
 -- interpit_test.lua
+-- VERSION 3
 -- Glenn G. Chappell
--- 2020-10-13
+-- Started: 2020-04-13
+-- Updated: 2020-04-15
 --
 -- For CS F331 / CSCE A331 Spring 2020
 -- Test Program for Module interpit
@@ -426,7 +428,6 @@ function checkInterp(t, ast,
             if not equal(stateout, expstateout) then
                 pass = false
                 msg = msg .. "Returned state is incorrect\n"
-                print(astToStr(stateout.f["fibo"])) --&&&
             end
         else
             pass = false
@@ -1024,25 +1025,35 @@ function test_expr(t)
     checkInterp(t, ast, input, statein, expoutput, expstateout,
       "Print unary -")
 
-    -- Print ! #1
+    -- Print not #1
     ast = {STMTxLIST, {PRINTxSTMT,
-      {{UNxOP, "!"}, {NUMLITxVAL, "5"}}}}
+      {{UNxOP, "not"}, {NUMLITxVAL, "5"}}}}
     input = {}
     statein = deepcopy(emptystate)
     expoutput = {"0"}
     expstateout = deepcopy(statein)
     checkInterp(t, ast, input, statein, expoutput, expstateout,
-      "Print ! #1")
+      "Print not #1")
 
-    -- Print ! #2
+    -- Print not #2
     ast = {STMTxLIST, {PRINTxSTMT,
-      {{UNxOP, "!"}, {NUMLITxVAL, "0"}}}}
+      {{UNxOP, "not"}, {NUMLITxVAL, "0"}}}}
     input = {}
     statein = deepcopy(emptystate)
     expoutput = {"1"}
     expstateout = deepcopy(statein)
     checkInterp(t, ast, input, statein, expoutput, expstateout,
-      "Print ! #2")
+      "Print not #2")
+
+    -- Print not not
+    ast = {STMTxLIST, {PRINTxSTMT,
+      {{UNxOP, "not"},{{UNxOP, "not"}, {NUMLITxVAL, "0"}}}}}
+    input = {}
+    statein = deepcopy(emptystate)
+    expoutput = {"0"}
+    expstateout = deepcopy(statein)
+    checkInterp(t, ast, input, statein, expoutput, expstateout,
+      "Print not not")
 
     -- Print binary +
     ast = {STMTxLIST, {PRINTxSTMT,
@@ -1274,85 +1285,85 @@ function test_expr(t)
     checkInterp(t, ast, input, statein, expoutput, expstateout,
       "Print >= #3")
 
-    -- Print && #1
+    -- Print and #1
     ast = {STMTxLIST, {PRINTxSTMT,
-      {{BINxOP, "&&"}, {NUMLITxVAL, "2"}, {NUMLITxVAL, "2"}}}}
+      {{BINxOP, "and"}, {NUMLITxVAL, "2"}, {NUMLITxVAL, "2"}}}}
     input = {}
     statein = deepcopy(emptystate)
     expoutput = {"1"}
     expstateout = deepcopy(statein)
     checkInterp(t, ast, input, statein, expoutput, expstateout,
-      "Print && #1")
+      "Print and #1")
 
-    -- Print && #2
+    -- Print and #2
     ast = {STMTxLIST, {PRINTxSTMT,
-      {{BINxOP, "&&"}, {NUMLITxVAL, "2"}, {NUMLITxVAL, "0"}}}}
+      {{BINxOP, "and"}, {NUMLITxVAL, "2"}, {NUMLITxVAL, "0"}}}}
     input = {}
     statein = deepcopy(emptystate)
     expoutput = {"0"}
     expstateout = deepcopy(statein)
     checkInterp(t, ast, input, statein, expoutput, expstateout,
-      "Print && #2")
+      "Print and #2")
 
-    -- Print && #3
+    -- Print and #3
     ast = {STMTxLIST, {PRINTxSTMT,
-      {{BINxOP, "&&"}, {NUMLITxVAL, "0"}, {NUMLITxVAL, "2"}}}}
+      {{BINxOP, "and"}, {NUMLITxVAL, "0"}, {NUMLITxVAL, "2"}}}}
     input = {}
     statein = deepcopy(emptystate)
     expoutput = {"0"}
     expstateout = deepcopy(statein)
     checkInterp(t, ast, input, statein, expoutput, expstateout,
-      "Print && #3")
+      "Print and #3")
 
-    -- Print && #4
+    -- Print and #4
     ast = {STMTxLIST, {PRINTxSTMT,
-      {{BINxOP, "&&"}, {NUMLITxVAL, "0"}, {NUMLITxVAL, "0"}}}}
+      {{BINxOP, "and"}, {NUMLITxVAL, "0"}, {NUMLITxVAL, "0"}}}}
     input = {}
     statein = deepcopy(emptystate)
     expoutput = {"0"}
     expstateout = deepcopy(statein)
     checkInterp(t, ast, input, statein, expoutput, expstateout,
-      "Print && #4")
+      "Print and #4")
 
-    -- Print || #1
+    -- Print or #1
     ast = {STMTxLIST, {PRINTxSTMT,
-      {{BINxOP, "||"}, {NUMLITxVAL, "2"}, {NUMLITxVAL, "2"}}}}
+      {{BINxOP, "or"}, {NUMLITxVAL, "2"}, {NUMLITxVAL, "2"}}}}
     input = {}
     statein = deepcopy(emptystate)
     expoutput = {"1"}
     expstateout = deepcopy(statein)
     checkInterp(t, ast, input, statein, expoutput, expstateout,
-      "Print || #1")
+      "Print or #1")
 
-    -- Print || #2
+    -- Print or #2
     ast = {STMTxLIST, {PRINTxSTMT,
-      {{BINxOP, "||"}, {NUMLITxVAL, "2"}, {NUMLITxVAL, "0"}}}}
+      {{BINxOP, "or"}, {NUMLITxVAL, "2"}, {NUMLITxVAL, "0"}}}}
     input = {}
     statein = deepcopy(emptystate)
     expoutput = {"1"}
     expstateout = deepcopy(statein)
     checkInterp(t, ast, input, statein, expoutput, expstateout,
-      "Print || #2")
+      "Print or #2")
 
-    -- Print || #3
+    -- Print or #3
     ast = {STMTxLIST, {PRINTxSTMT,
-      {{BINxOP, "||"}, {NUMLITxVAL, "0"}, {NUMLITxVAL, "2"}}}}
+      {{BINxOP, "or"}, {NUMLITxVAL, "0"}, {NUMLITxVAL, "2"}}}}
     input = {}
     statein = deepcopy(emptystate)
     expoutput = {"1"}
     expstateout = deepcopy(statein)
     checkInterp(t, ast, input, statein, expoutput, expstateout,
-      "Print || #3")
+      "Print or #3")
 
-    -- Print || #4
+    -- Print or #4
     ast = {STMTxLIST, {PRINTxSTMT,
-      {{BINxOP, "||"}, {NUMLITxVAL, "0"}, {NUMLITxVAL, "0"}}}}
+      {{BINxOP, "or"}, {NUMLITxVAL, "0"}, {NUMLITxVAL, "0"}}}}
     input = {}
     statein = deepcopy(emptystate)
     expoutput = {"0"}
     expstateout = deepcopy(statein)
     checkInterp(t, ast, input, statein, expoutput, expstateout,
-      "Print || #4")
+      "Print or #4")
 
     -- Longer expression
     ast =

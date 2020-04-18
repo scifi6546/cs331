@@ -412,9 +412,9 @@ function interpit.interp(ast, state, incall, outcall)
                 return boolToInt(eval_expr(ast[2]) > eval_expr(ast[3]))
             elseif ast[1][2] == "<" then
                 return boolToInt(eval_expr(ast[2]) < eval_expr(ast[3]))
-            elseif ast[1][2] == "&&" then
+            elseif ast[1][2] == "and" then
                 return boolToInt(numToBool(eval_expr(ast[2])) and numToBool(eval_expr(ast[3])))
-            elseif ast[1][2] == "||" then
+            elseif ast[1][2] == "or" then
                 return boolToInt(numToBool(eval_expr(ast[2])) or numToBool(eval_expr(ast[3])))
             elseif ast[1][2] == "%" then
                 local left = eval_expr(ast[3])
@@ -433,7 +433,7 @@ function interpit.interp(ast, state, incall, outcall)
                 return numToInt(-1* eval_expr(ast[2]))
             elseif ast[1][2] == "+" then 
                 return numToInt(eval_expr(ast[2]))
-            elseif ast[1][2] == "!" then
+            elseif ast[1][2] == "not" then
                 local num = numToInt(eval_expr(ast[2]))
                 if num==0 then
                     return 1
